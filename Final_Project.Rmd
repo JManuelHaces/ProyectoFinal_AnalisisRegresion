@@ -2,10 +2,138 @@
 title: "Final Project"
 output: html_notebook
 ---
-Authors:
-Cárdenas Gallardo Paula Daniela – 733720 - Ing. Y Ciencia de Datos \n
-Haces López José Manuel – 734759 - Ing. Y Ciencia de Datos
-Navarro Silva, José Tonatiuh – 722399 - Ing. Financiera
-Villa Domínguez Paulo Adrián – 733773 - Ing. Y Ciencia de Datos
 
+```{r, message=FALSE, warning=FALSE}
+# Libraries
+library(lme4)
+library(olsrr)
+library(lmtest)
+library(ggpubr)
+library(ggplot2)
+library(survival)
+library(ggfortify)
+library(survminer)
+library(tidyverse)
+library(ggfortify)
+library(ggcorrplot)
+library(tidymodels)
+```
+
+
+# Phase 1 - (40%)
+- The company want to create a model that predicts the probability of a New Client to repurchase in the Month 5, based on their transactional behavior during the first month (considering the first month as M0).
+
+```{r}
+# Loading dataset with the first month activity for every client
+data1 <- readxl::read_excel("./Data/clients_first_month_VF.xlsx", sheet = "db")
+
+# Changing the variables types
+data1$id <- as.numeric(data1$id)
+data1$age_gen <- as.factor(data$age_gen)
+data1$date_order <- as.Date(data$date_order)
+data1$MXN <- as.numeric(data$MXN)
+data1$products <- as.numeric(data$products)
+
+head(data1)
+```
+
+```{r}
+# Loading dataset with the first month activity for every client
+data2 <- readxl::read_excel("./Data/clients_18months_VF.xlsx", sheet = "db")
+
+# Changing the variables types
+data2$id <- as.numeric(data2$id)
+data2$month <- as.factor(data2$month)
+data2$MXN <- as.numeric(data2$MXN)
+  
+head(data2)
+```
+
+
+## 1.1) Aditional variables to calculate:
+  - Recency: Days since last order considerig the end of the period as 31/03/2021.
+  - Frequency: Number of orders in the first month.
+  - Order Size: AVG MXN of the orders in their first month
+  - Total MXM: Total MXN spend in the first month.
+```{r, message=FALSE}
+# Making the variables for the first dataset
+data1 <- data1 %>% 
+  group_by(id) %>% 
+  summarise(max_month = max(date_order),
+            recency = as.numeric(difftime(as.Date("2021-03-31"), max_month, units = "days")),
+            frequency = as.numeric(n()),
+            order_size = as.numeric(mean(MXN)),
+            total_MXN = as.numeric(sum(MXN))
+            )
+
+data1 <- data1 %>% select(-max_month)
+data1
+```
+
+```{r}
+# Making the survive variable
+data1_5 <- data2 %>% 
+  filter(month == "M5") %>% 
+  mutate(status = ifelse (MXN > 0, 1, 0))
+
+# Selecting the columns that we need
+data1_5 <- data1_5 %>% select(id, status)
+data1_5
+```
+
+```{r}
+# Merging both dataset
+data1 <- merge(data1, data1_5, by="id")
+data1
+```
+
+## 1.2) Develop a data exploration.
+
+
+
+## 1.3) Develop a logistic regression in order to solve the problem. (The split of train and test is up to you)
+```{r}
+# Train and test
+set.seed(10)
+
+split_inicial<- initial_split(
+                data = data1,
+                prop = 0.8,
+                strata = status
+                )
+
+train <- training(split_inicial)
+test <- testing(split_inicial)
+
+# Training the model
+logistic <- glm(status ~ ., data=train, family="binomial")
+summary(logistic)
+```
+  
+- Interpret the coefficients of your model.
+
+  
+- Review the performance of the model on the test data ( Accuracy, Sensitivity, Specificity, Confusion Matrix)
+  - Consider as threshold 40%, 50% and 60%,  present the performance for all the thresholds and select the best one ( Justify your decision)
+
+
+- Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability clasify the new clients:
+  - Above or equal to the threshold selected as "High Probability"
+  - Less than 15% as "Low Probability"
+  - The rest as "Medium Probability"
+
+
+
+# Phase 2 - (40%)
+- Generate a survival analysis for the new clients.
+- Consider as "dead" those who do not make a purchase in the month 18.
+
+- Use the variables, age generation, market, probability label and recency and interpret the coeficients.
+
+- Generate the survival curves based on the following.
+  - Graph 1 - Based on probability label
+
+  - Graph 2 - Based on market
+
+  - Interpret both graphs
 

@@ -1758,13 +1758,181 @@ display: none;
 
 
 <!-- rnb-text-begin -->
-<p>Authors: Cárdenas Gallardo Paula Daniela – 733720 - Ing. Y Ciencia de
-Datos Haces López José Manuel – 734759 - Ing. Y Ciencia de Datos Navarro
-Silva, José Tonatiuh – 722399 - Ing. Financiera Villa Domínguez Paulo
-Adrián – 733773 - Ing. Y Ciencia de Datos</p>
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBMaWJyYXJpZXNcbmxpYnJhcnkobG1lNClcbmxpYnJhcnkob2xzcnIpXG5saWJyYXJ5KGxtdGVzdClcbmxpYnJhcnkoZ2dwdWJyKVxubGlicmFyeShnZ3Bsb3QyKVxubGlicmFyeShzdXJ2aXZhbClcbmxpYnJhcnkoZ2dmb3J0aWZ5KVxubGlicmFyeShzdXJ2bWluZXIpXG5saWJyYXJ5KHRpZHl2ZXJzZSlcbmxpYnJhcnkoZ2dmb3J0aWZ5KVxubGlicmFyeShnZ2NvcnJwbG90KVxubGlicmFyeSh0aWR5bW9kZWxzKVxuYGBgIn0= -->
+<pre class="r"><code># Libraries
+library(lme4)
+library(olsrr)
+library(lmtest)
+library(ggpubr)
+library(ggplot2)
+library(survival)
+library(ggfortify)
+library(survminer)
+library(tidyverse)
+library(ggfortify)
+library(ggcorrplot)
+library(tidymodels)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="phase-1---40" class="section level1">
+<h1>Phase 1 - (40%)</h1>
+<ul>
+<li>The company want to create a model that predicts the probability of
+a New Client to repurchase in the Month 5, based on their transactional
+behavior during the first month (considering the first month as
+M0).</li>
+</ul>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBMb2FkaW5nIGRhdGFzZXQgd2l0aCB0aGUgZmlyc3QgbW9udGggYWN0aXZpdHkgZm9yIGV2ZXJ5IGNsaWVudFxuZGF0YTEgPC0gcmVhZHhsOjpyZWFkX2V4Y2VsKFwiLi9EYXRhL2NsaWVudHNfZmlyc3RfbW9udGhfVkYueGxzeFwiLCBzaGVldCA9IFwiZGJcIilcblxuIyBDaGFuZ2luZyB0aGUgdmFyaWFibGVzIHR5cGVzXG5kYXRhMSRpZCA8LSBhcy5udW1lcmljKGRhdGExJGlkKVxuZGF0YTEkYWdlX2dlbiA8LSBhcy5mYWN0b3IoZGF0YSRhZ2VfZ2VuKVxuZGF0YTEkZGF0ZV9vcmRlciA8LSBhcy5EYXRlKGRhdGEkZGF0ZV9vcmRlcilcbmRhdGExJE1YTiA8LSBhcy5udW1lcmljKGRhdGEkTVhOKVxuZGF0YTEkcHJvZHVjdHMgPC0gYXMubnVtZXJpYyhkYXRhJHByb2R1Y3RzKVxuXG5oZWFkKGRhdGExKVxuYGBgIn0= -->
+<pre class="r"><code># Loading dataset with the first month activity for every client
+data1 &lt;- readxl::read_excel(&quot;./Data/clients_first_month_VF.xlsx&quot;, sheet = &quot;db&quot;)
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkZpbmFsIFByb2plY3QiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KQXV0aG9yczoNCkPDoXJkZW5hcyBHYWxsYXJkbyBQYXVsYSBEYW5pZWxhIOKAkyA3MzM3MjAgLSBJbmcuIFkgQ2llbmNpYSBkZSBEYXRvcyBcbg0KSGFjZXMgTMOzcGV6IEpvc8OpIE1hbnVlbCDigJMgNzM0NzU5IC0gSW5nLiBZIENpZW5jaWEgZGUgRGF0b3MNCk5hdmFycm8gU2lsdmEsIEpvc8OpIFRvbmF0aXVoIOKAkyA3MjIzOTkgLSBJbmcuIEZpbmFuY2llcmENClZpbGxhIERvbcOtbmd1ZXogUGF1bG8gQWRyacOhbiDigJMgNzMzNzczIC0gSW5nLiBZIENpZW5jaWEgZGUgRGF0b3MNCg0KDQo=</div>
+# Changing the variables types
+data1$id &lt;- as.numeric(data1$id)
+data1$age_gen &lt;- as.factor(data$age_gen)
+data1$date_order &lt;- as.Date(data$date_order)
+data1$MXN &lt;- as.numeric(data$MXN)
+data1$products &lt;- as.numeric(data$products)
+
+head(data1)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBMb2FkaW5nIGRhdGFzZXQgd2l0aCB0aGUgZmlyc3QgbW9udGggYWN0aXZpdHkgZm9yIGV2ZXJ5IGNsaWVudFxuZGF0YTIgPC0gcmVhZHhsOjpyZWFkX2V4Y2VsKFwiLi9EYXRhL2NsaWVudHNfMThtb250aHNfVkYueGxzeFwiLCBzaGVldCA9IFwiZGJcIilcblxuIyBDaGFuZ2luZyB0aGUgdmFyaWFibGVzIHR5cGVzXG5kYXRhMiRpZCA8LSBhcy5udW1lcmljKGRhdGEyJGlkKVxuZGF0YTIkbW9udGggPC0gYXMuZmFjdG9yKGRhdGEyJG1vbnRoKVxuZGF0YTIkTVhOIDwtIGFzLm51bWVyaWMoZGF0YTIkTVhOKVxuICBcbmhlYWQoZGF0YTIpXG5gYGAifQ== -->
+<pre class="r"><code># Loading dataset with the first month activity for every client
+data2 &lt;- readxl::read_excel(&quot;./Data/clients_18months_VF.xlsx&quot;, sheet = &quot;db&quot;)
+
+# Changing the variables types
+data2$id &lt;- as.numeric(data2$id)
+data2$month &lt;- as.factor(data2$month)
+data2$MXN &lt;- as.numeric(data2$MXN)
+  
+head(data2)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="aditional-variables-to-calculate" class="section level2">
+<h2>1.1) Aditional variables to calculate:</h2>
+<ul>
+<li>Recency: Days since last order considerig the end of the period as
+31/03/2021.</li>
+<li>Frequency: Number of orders in the first month.</li>
+<li>Order Size: AVG MXN of the orders in their first month</li>
+<li>Total MXM: Total MXN spend in the first month.</li>
+</ul>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBNYWtpbmcgdGhlIHZhcmlhYmxlcyBmb3IgdGhlIGZpcnN0IGRhdGFzZXRcbmRhdGExIDwtIGRhdGExICU+JSBcbiAgZ3JvdXBfYnkoaWQpICU+JSBcbiAgc3VtbWFyaXNlKG1heF9tb250aCA9IG1heChkYXRlX29yZGVyKSxcbiAgICAgICAgICAgIHJlY2VuY3kgPSBhcy5udW1lcmljKGRpZmZ0aW1lKGFzLkRhdGUoXCIyMDIxLTAzLTMxXCIpLCBtYXhfbW9udGgsIHVuaXRzID0gXCJkYXlzXCIpKSxcbiAgICAgICAgICAgIGZyZXF1ZW5jeSA9IGFzLm51bWVyaWMobigpKSxcbiAgICAgICAgICAgIG9yZGVyX3NpemUgPSBhcy5udW1lcmljKG1lYW4oTVhOKSksXG4gICAgICAgICAgICB0b3RhbF9NWE4gPSBhcy5udW1lcmljKHN1bShNWE4pKVxuICAgICAgICAgICAgKVxuXG5kYXRhMSA8LSBkYXRhMSAlPiUgc2VsZWN0KC1tYXhfbW9udGgpXG5kYXRhMVxuYGBgIn0= -->
+<pre class="r"><code># Making the variables for the first dataset
+data1 &lt;- data1 %&gt;% 
+  group_by(id) %&gt;% 
+  summarise(max_month = max(date_order),
+            recency = as.numeric(difftime(as.Date(&quot;2021-03-31&quot;), max_month, units = &quot;days&quot;)),
+            frequency = as.numeric(n()),
+            order_size = as.numeric(mean(MXN)),
+            total_MXN = as.numeric(sum(MXN))
+            )
+
+data1 &lt;- data1 %&gt;% select(-max_month)
+data1</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBNYWtpbmcgdGhlIHN1cnZpdmUgdmFyaWFibGVcbmRhdGExXzUgPC0gZGF0YTIgJT4lIFxuICBmaWx0ZXIobW9udGggPT0gXCJNNVwiKSAlPiUgXG4gIG11dGF0ZShzdGF0dXMgPSBpZmVsc2UgKE1YTiA+IDAsIDEsIDApKVxuXG4jIFNlbGVjdGluZyB0aGUgY29sdW1ucyB0aGF0IHdlIG5lZWRcbmRhdGExXzUgPC0gZGF0YTFfNSAlPiUgc2VsZWN0KGlkLCBzdGF0dXMpXG5kYXRhMV81XG5gYGAifQ== -->
+<pre class="r"><code># Making the survive variable
+data1_5 &lt;- data2 %&gt;% 
+  filter(month == &quot;M5&quot;) %&gt;% 
+  mutate(status = ifelse (MXN &gt; 0, 1, 0))
+
+# Selecting the columns that we need
+data1_5 &lt;- data1_5 %&gt;% select(id, status)
+data1_5</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBNZXJnaW5nIGJvdGggZGF0YXNldFxuZGF0YTEgPC0gbWVyZ2UoZGF0YTEsIGRhdGExXzUsIGJ5PVwiaWRcIilcbmRhdGExXG5gYGAifQ== -->
+<pre class="r"><code># Merging both dataset
+data1 &lt;- merge(data1, data1_5, by=&quot;id&quot;)
+data1</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="develop-a-data-exploration." class="section level2">
+<h2>1.2) Develop a data exploration.</h2>
+</div>
+<div id="develop-a-logistic-regression-in-order-to-solve-the-problem.-the-split-of-train-and-test-is-up-to-you" class="section level2">
+<h2>1.3) Develop a logistic regression in order to solve the problem.
+(The split of train and test is up to you)</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBUcmFpbiBhbmQgdGVzdFxuc2V0LnNlZWQoMTApXG5cbnNwbGl0X2luaWNpYWw8LSBpbml0aWFsX3NwbGl0KFxuICAgICAgICAgICAgICAgIGRhdGEgPSBkYXRhMSxcbiAgICAgICAgICAgICAgICBwcm9wID0gMC44LFxuICAgICAgICAgICAgICAgIHN0cmF0YSA9IHN0YXR1c1xuICAgICAgICAgICAgICAgIClcblxudHJhaW4gPC0gdHJhaW5pbmcoc3BsaXRfaW5pY2lhbClcbnRlc3QgPC0gdGVzdGluZyhzcGxpdF9pbmljaWFsKVxuXG4jIFRyYWluaW5nIHRoZSBtb2RlbFxubG9naXN0aWMgPC0gZ2xtKHN0YXR1cyB+IC4sIGRhdGE9dHJhaW4sIGZhbWlseT1cImJpbm9taWFsXCIpXG5zdW1tYXJ5KGxvZ2lzdGljKVxuYGBgIn0= -->
+<pre class="r"><code># Train and test
+set.seed(10)
+
+split_inicial&lt;- initial_split(
+                data = data1,
+                prop = 0.8,
+                strata = status
+                )
+
+train &lt;- training(split_inicial)
+test &lt;- testing(split_inicial)
+
+# Training the model
+logistic &lt;- glm(status ~ ., data=train, family=&quot;binomial&quot;)
+summary(logistic)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ul>
+<li><p>Interpret the coefficients of your model.</p></li>
+<li><p>Review the performance of the model on the test data ( Accuracy,
+Sensitivity, Specificity, Confusion Matrix)</p>
+<ul>
+<li>Consider as threshold 40%, 50% and 60%, present the performance for
+all the thresholds and select the best one ( Justify your decision)</li>
+</ul></li>
+<li><p>Once that the threshold is selected, calculate the probability of
+repurchase for all the dataset (train and test) and based on the
+probability clasify the new clients:</p>
+<ul>
+<li>Above or equal to the threshold selected as “High Probability”</li>
+<li>Less than 15% as “Low Probability”</li>
+<li>The rest as “Medium Probability”</li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="phase-2---40" class="section level1">
+<h1>Phase 2 - (40%)</h1>
+<ul>
+<li><p>Generate a survival analysis for the new clients.</p></li>
+<li><p>Consider as “dead” those who do not make a purchase in the month
+18.</p></li>
+<li><p>Use the variables, age generation, market, probability label and
+recency and interpret the coeficients.</p></li>
+<li><p>Generate the survival curves based on the following.</p>
+<ul>
+<li><p>Graph 1 - Based on probability label</p></li>
+<li><p>Graph 2 - Based on market</p></li>
+<li><p>Interpret both graphs</p></li>
+</ul></li>
+</ul>
+<!-- rnb-text-end -->
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkZpbmFsIFByb2plY3QiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpgYGB7ciwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0NCiMgTGlicmFyaWVzDQpsaWJyYXJ5KGxtZTQpDQpsaWJyYXJ5KG9sc3JyKQ0KbGlicmFyeShsbXRlc3QpDQpsaWJyYXJ5KGdncHVicikNCmxpYnJhcnkoZ2dwbG90MikNCmxpYnJhcnkoc3Vydml2YWwpDQpsaWJyYXJ5KGdnZm9ydGlmeSkNCmxpYnJhcnkoc3Vydm1pbmVyKQ0KbGlicmFyeSh0aWR5dmVyc2UpDQpsaWJyYXJ5KGdnZm9ydGlmeSkNCmxpYnJhcnkoZ2djb3JycGxvdCkNCmxpYnJhcnkodGlkeW1vZGVscykNCmBgYA0KDQoNCiMgUGhhc2UgMSAtICg0MCUpDQotIFRoZSBjb21wYW55IHdhbnQgdG8gY3JlYXRlIGEgbW9kZWwgdGhhdCBwcmVkaWN0cyB0aGUgcHJvYmFiaWxpdHkgb2YgYSBOZXcgQ2xpZW50IHRvIHJlcHVyY2hhc2UgaW4gdGhlIE1vbnRoIDUsIGJhc2VkIG9uIHRoZWlyIHRyYW5zYWN0aW9uYWwgYmVoYXZpb3IgZHVyaW5nIHRoZSBmaXJzdCBtb250aCAoY29uc2lkZXJpbmcgdGhlIGZpcnN0IG1vbnRoIGFzIE0wKS4NCg0KYGBge3J9DQojIExvYWRpbmcgZGF0YXNldCB3aXRoIHRoZSBmaXJzdCBtb250aCBhY3Rpdml0eSBmb3IgZXZlcnkgY2xpZW50DQpkYXRhMSA8LSByZWFkeGw6OnJlYWRfZXhjZWwoIi4vRGF0YS9jbGllbnRzX2ZpcnN0X21vbnRoX1ZGLnhsc3giLCBzaGVldCA9ICJkYiIpDQoNCiMgQ2hhbmdpbmcgdGhlIHZhcmlhYmxlcyB0eXBlcw0KZGF0YTEkaWQgPC0gYXMubnVtZXJpYyhkYXRhMSRpZCkNCmRhdGExJGFnZV9nZW4gPC0gYXMuZmFjdG9yKGRhdGEkYWdlX2dlbikNCmRhdGExJGRhdGVfb3JkZXIgPC0gYXMuRGF0ZShkYXRhJGRhdGVfb3JkZXIpDQpkYXRhMSRNWE4gPC0gYXMubnVtZXJpYyhkYXRhJE1YTikNCmRhdGExJHByb2R1Y3RzIDwtIGFzLm51bWVyaWMoZGF0YSRwcm9kdWN0cykNCg0KaGVhZChkYXRhMSkNCmBgYA0KDQpgYGB7cn0NCiMgTG9hZGluZyBkYXRhc2V0IHdpdGggdGhlIGZpcnN0IG1vbnRoIGFjdGl2aXR5IGZvciBldmVyeSBjbGllbnQNCmRhdGEyIDwtIHJlYWR4bDo6cmVhZF9leGNlbCgiLi9EYXRhL2NsaWVudHNfMThtb250aHNfVkYueGxzeCIsIHNoZWV0ID0gImRiIikNCg0KIyBDaGFuZ2luZyB0aGUgdmFyaWFibGVzIHR5cGVzDQpkYXRhMiRpZCA8LSBhcy5udW1lcmljKGRhdGEyJGlkKQ0KZGF0YTIkbW9udGggPC0gYXMuZmFjdG9yKGRhdGEyJG1vbnRoKQ0KZGF0YTIkTVhOIDwtIGFzLm51bWVyaWMoZGF0YTIkTVhOKQ0KICANCmhlYWQoZGF0YTIpDQpgYGANCg0KDQojIyAxLjEpIEFkaXRpb25hbCB2YXJpYWJsZXMgdG8gY2FsY3VsYXRlOg0KICAtIFJlY2VuY3k6IERheXMgc2luY2UgbGFzdCBvcmRlciBjb25zaWRlcmlnIHRoZSBlbmQgb2YgdGhlIHBlcmlvZCBhcyAzMS8wMy8yMDIxLg0KICAtIEZyZXF1ZW5jeTogTnVtYmVyIG9mIG9yZGVycyBpbiB0aGUgZmlyc3QgbW9udGguDQogIC0gT3JkZXIgU2l6ZTogQVZHIE1YTiBvZiB0aGUgb3JkZXJzIGluIHRoZWlyIGZpcnN0IG1vbnRoDQogIC0gVG90YWwgTVhNOiBUb3RhbCBNWE4gc3BlbmQgaW4gdGhlIGZpcnN0IG1vbnRoLg0KYGBge3IsIG1lc3NhZ2U9RkFMU0V9DQojIE1ha2luZyB0aGUgdmFyaWFibGVzIGZvciB0aGUgZmlyc3QgZGF0YXNldA0KZGF0YTEgPC0gZGF0YTEgJT4lIA0KICBncm91cF9ieShpZCkgJT4lIA0KICBzdW1tYXJpc2UobWF4X21vbnRoID0gbWF4KGRhdGVfb3JkZXIpLA0KICAgICAgICAgICAgcmVjZW5jeSA9IGFzLm51bWVyaWMoZGlmZnRpbWUoYXMuRGF0ZSgiMjAyMS0wMy0zMSIpLCBtYXhfbW9udGgsIHVuaXRzID0gImRheXMiKSksDQogICAgICAgICAgICBmcmVxdWVuY3kgPSBhcy5udW1lcmljKG4oKSksDQogICAgICAgICAgICBvcmRlcl9zaXplID0gYXMubnVtZXJpYyhtZWFuKE1YTikpLA0KICAgICAgICAgICAgdG90YWxfTVhOID0gYXMubnVtZXJpYyhzdW0oTVhOKSkNCiAgICAgICAgICAgICkNCg0KZGF0YTEgPC0gZGF0YTEgJT4lIHNlbGVjdCgtbWF4X21vbnRoKQ0KZGF0YTENCmBgYA0KDQpgYGB7cn0NCiMgTWFraW5nIHRoZSBzdXJ2aXZlIHZhcmlhYmxlDQpkYXRhMV81IDwtIGRhdGEyICU+JSANCiAgZmlsdGVyKG1vbnRoID09ICJNNSIpICU+JSANCiAgbXV0YXRlKHN0YXR1cyA9IGlmZWxzZSAoTVhOID4gMCwgMSwgMCkpDQoNCiMgU2VsZWN0aW5nIHRoZSBjb2x1bW5zIHRoYXQgd2UgbmVlZA0KZGF0YTFfNSA8LSBkYXRhMV81ICU+JSBzZWxlY3QoaWQsIHN0YXR1cykNCmRhdGExXzUNCmBgYA0KDQpgYGB7cn0NCiMgTWVyZ2luZyBib3RoIGRhdGFzZXQNCmRhdGExIDwtIG1lcmdlKGRhdGExLCBkYXRhMV81LCBieT0iaWQiKQ0KZGF0YTENCmBgYA0KDQojIyAxLjIpIERldmVsb3AgYSBkYXRhIGV4cGxvcmF0aW9uLg0KDQoNCg0KIyMgMS4zKSBEZXZlbG9wIGEgbG9naXN0aWMgcmVncmVzc2lvbiBpbiBvcmRlciB0byBzb2x2ZSB0aGUgcHJvYmxlbS4gKFRoZSBzcGxpdCBvZiB0cmFpbiBhbmQgdGVzdCBpcyB1cCB0byB5b3UpDQpgYGB7cn0NCiMgVHJhaW4gYW5kIHRlc3QNCnNldC5zZWVkKDEwKQ0KDQpzcGxpdF9pbmljaWFsPC0gaW5pdGlhbF9zcGxpdCgNCiAgICAgICAgICAgICAgICBkYXRhID0gZGF0YTEsDQogICAgICAgICAgICAgICAgcHJvcCA9IDAuOCwNCiAgICAgICAgICAgICAgICBzdHJhdGEgPSBzdGF0dXMNCiAgICAgICAgICAgICAgICApDQoNCnRyYWluIDwtIHRyYWluaW5nKHNwbGl0X2luaWNpYWwpDQp0ZXN0IDwtIHRlc3Rpbmcoc3BsaXRfaW5pY2lhbCkNCg0KIyBUcmFpbmluZyB0aGUgbW9kZWwNCmxvZ2lzdGljIDwtIGdsbShzdGF0dXMgfiAuLCBkYXRhPXRyYWluLCBmYW1pbHk9ImJpbm9taWFsIikNCnN1bW1hcnkobG9naXN0aWMpDQpgYGANCiAgDQotIEludGVycHJldCB0aGUgY29lZmZpY2llbnRzIG9mIHlvdXIgbW9kZWwuDQoNCiAgDQotIFJldmlldyB0aGUgcGVyZm9ybWFuY2Ugb2YgdGhlIG1vZGVsIG9uIHRoZSB0ZXN0IGRhdGEgKCBBY2N1cmFjeSwgU2Vuc2l0aXZpdHksIFNwZWNpZmljaXR5LCBDb25mdXNpb24gTWF0cml4KQ0KICAtIENvbnNpZGVyIGFzIHRocmVzaG9sZCA0MCUsIDUwJSBhbmQgNjAlLCAgcHJlc2VudCB0aGUgcGVyZm9ybWFuY2UgZm9yIGFsbCB0aGUgdGhyZXNob2xkcyBhbmQgc2VsZWN0IHRoZSBiZXN0IG9uZSAoIEp1c3RpZnkgeW91ciBkZWNpc2lvbikNCg0KDQotIE9uY2UgdGhhdCB0aGUgdGhyZXNob2xkIGlzIHNlbGVjdGVkLCBjYWxjdWxhdGUgdGhlIHByb2JhYmlsaXR5IG9mIHJlcHVyY2hhc2UgZm9yIGFsbCB0aGUgZGF0YXNldCAodHJhaW4gYW5kIHRlc3QpIGFuZCBiYXNlZCBvbiB0aGUgcHJvYmFiaWxpdHkgY2xhc2lmeSB0aGUgbmV3IGNsaWVudHM6DQogIC0gQWJvdmUgb3IgZXF1YWwgdG8gdGhlIHRocmVzaG9sZCBzZWxlY3RlZCBhcyAiSGlnaCBQcm9iYWJpbGl0eSINCiAgLSBMZXNzIHRoYW4gMTUlIGFzICJMb3cgUHJvYmFiaWxpdHkiDQogIC0gVGhlIHJlc3QgYXMgIk1lZGl1bSBQcm9iYWJpbGl0eSINCg0KDQoNCiMgUGhhc2UgMiAtICg0MCUpDQotIEdlbmVyYXRlIGEgc3Vydml2YWwgYW5hbHlzaXMgZm9yIHRoZSBuZXcgY2xpZW50cy4NCi0gQ29uc2lkZXIgYXMgImRlYWQiIHRob3NlIHdobyBkbyBub3QgbWFrZSBhIHB1cmNoYXNlIGluIHRoZSBtb250aCAxOC4NCg0KLSBVc2UgdGhlIHZhcmlhYmxlcywgYWdlIGdlbmVyYXRpb24sIG1hcmtldCwgcHJvYmFiaWxpdHkgbGFiZWwgYW5kIHJlY2VuY3kgYW5kIGludGVycHJldCB0aGUgY29lZmljaWVudHMuDQoNCi0gR2VuZXJhdGUgdGhlIHN1cnZpdmFsIGN1cnZlcyBiYXNlZCBvbiB0aGUgZm9sbG93aW5nLg0KICAtIEdyYXBoIDEgLSBCYXNlZCBvbiBwcm9iYWJpbGl0eSBsYWJlbA0KDQogIC0gR3JhcGggMiAtIEJhc2VkIG9uIG1hcmtldA0KDQogIC0gSW50ZXJwcmV0IGJvdGggZ3JhcGhzDQoNCg==</div>
 
 
 
