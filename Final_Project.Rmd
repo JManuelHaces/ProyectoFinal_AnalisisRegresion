@@ -1,0 +1,11 @@
+---
+title: "Final Project"
+output: html_notebook
+---
+Authors:
+Cárdenas Gallardo Paula Daniela – 733720 - Ing. Y Ciencia de Datos \n
+Haces López José Manuel – 734759 - Ing. Y Ciencia de Datos
+Navarro Silva, José Tonatiuh – 722399 - Ing. Financiera
+Villa Domínguez Paulo Adrián – 733773 - Ing. Y Ciencia de Datos
+
+
