@@ -17,6 +17,7 @@ library(tidyverse)
 library(ggfortify)
 library(ggcorrplot)
 library(tidymodels)
+library(patchwork)
 ```
 
 # Phase 1 - (40%)
@@ -91,6 +92,139 @@ data1
 ```
 
 ## 1.2) Develop a data exploration.
+
+### 1.2.1) Categorical variables
+
+```{r}
+categoric_df <- data1 %>% select(market,age_gen)
+summary(categoric_df)
+```
+- We have only two categorical variables without null values and with a low granularity.
+
+
+```{r}
+initial_props <- data1 %>% count(status) %>% mutate(Balance= n/sum(n)) %>% filter(status==1)
+initial_props
+```
+The percentage of customers who repurchased in the entire data set it´s around 40.71%, now we are going to compare this proportion to all the categories of our categorical variables.
+
+
+```{r}
+market_props <- data1 %>% group_by(market) %>%  count(status) %>% mutate(proportion = n/sum(n)) %>% filter(status==1)
+
+ggplot(market_props,aes(x=market, y=proportion)) + geom_point(size = 3.7, colour= c("blue", "red")) + geom_hline(yintercept=0.4079265, linetype="dashed", color = "red", linetype = 'Proportion of all data') + 
+                                          labs( title = 'Percentage of clients who repurchased',
+                                          x = 'Categories of the "Market" variable',
+                                          y = "%") 
+```
+The red dashed line is the proportion of the entire data set and as we can see the English category of the market variable is pretty close to it and doesn't seem to be a very good predictor, on the other hand the Spanish may be more useful in order to predict customers who are not going to repurchase due to it has a lower proportion on people who repurchased comparing to the entire data set.
+
+
+
+```{r}
+gen_props <- data1 %>% group_by(age_gen) %>%  count(status) %>% mutate(proportion = n/sum(n)) %>% filter(status==1)
+
+ggplot(gen_props,aes(x=age_gen, y=proportion)) + geom_point(size = 3.7, colour= c("blue", "red", 'Brown','Orange')) + geom_hline(yintercept=0.4079265, linetype="dashed", color = "red", linetype = 'Proportion of all data') + 
+                                          labs( title = 'Percentage of clients who repurchased',
+                                          x = 'Categories of the "Age Generation" variable',
+                                          y = "%") 
+```
+Analyzing the second categorical variable and based on the previous visualization there is a good chance that "Boomers" and "Generation Z" end up being good predictors because of it's difference on the proportion of customers who repurchased compared to the other categories and the general proportion.
+
+
+### 1.2.2) Numerical variables
+
+```{r}
+numeric_df <- data1 %>% select(-c(market,age_gen,status))
+summary(numeric_df)
+
+```
+Recency: 
+
+- The 50% of the clients had 4 days since last order considerig the end of the period as 31/03/2021
+- The maximum value for this variable is 30, from this moment we may think that customers with values like this one could have less probabilities to repurchase
+
+```{r}
+# Layout to split the screen
+layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,8))
+ 
+# Draw the boxplot and the histogram 
+par(mar=c(0, 3.1, 1.1, 2.1))
+boxplot(numeric_df$recency, horizontal=TRUE , ylim=c(0,30), xaxt="n" , col=rgb(0.8,0.8,0,0.5) , frame=F)
+par(mar=c(4, 3.1, 1.1, 2.1))
+hist(numeric_df$recency , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Days since last order", xlim=c(0,30))
+```
+
+
+Frecuency:
+
+- 75% of the customers had 3 or less number of orders in the first month. 
+
+```{r}
+# Layout to split the screen
+layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,8))
+ 
+# Draw the boxplot and the histogram 
+par(mar=c(0, 3.1, 1.1, 2.1))
+boxplot(numeric_df$frequency, horizontal=TRUE , ylim=c(0,30), xaxt="n" , col=rgb(0.8,0.8,0,0.5) , frame=F)
+par(mar=c(4, 3.1, 1.1, 2.1))
+hist(numeric_df$frequency , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Number of orders in the first month.", xlim=c(0,120))
+```
+
+
+Order Size:
+
+- 75% of the customers had an average of $175.59 or less in their orders in the first month.
+- As we can see The mean is greater more than 50% than the median, and we have a maximum value of $1012,
+that's probabliy because we could have outliers in that variable
+
+```{r}
+# Layout to split the screen
+layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,8))
+ 
+# Draw the boxplot and the histogram 
+par(mar=c(0, 3.1, 1.1, 2.1))
+boxplot(numeric_df$order_size, horizontal=TRUE , ylim=c(0,1012), xaxt="n" , col=rgb(0.8,0.8,0,0.5) , frame=F)
+par(mar=c(4, 3.1, 1.1, 2.1))
+hist(numeric_df$order_size , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Avg of money by orders in the first month", xlim=c(0,1012))
+```
+
+
+Total MXN:
+
+- 75% of the customers spend $422.6 or less in their first month.
+- The mean is greater more than 70% than the median, and we have a maximum value of 4047, we may have outliers in this variable too.
+
+
+```{r}
+# Layout to split the screen
+layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,8))
+ 
+# Draw the boxplot and the histogram 
+par(mar=c(0, 3.1, 1.1, 2.1))
+boxplot(numeric_df$total_MXN, horizontal=TRUE , ylim=c(0,4047), xaxt="n" , col=rgb(0.8,0.8,0,0.5) , frame=F)
+par(mar=c(4, 3.1, 1.1, 2.1))
+hist(numeric_df$total_MXN , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Total money spent in the first month", xlim=c(0,4047))
+```
+
+Correlation with the reponse variable:
+
+```{r}
+corr <- corr(select(data1,recency,frequency,order_size,total_MXN,status))
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+   lab = TRUE)
+```
+The most correlated variables are order_size + total_MXN which makes sense as the order size increase, the cost of it increases too. We are not going to remove any of those highly correlated variables as we only have a few variables to work with and they are not correlated enough in order to think that they are going to bring us problems in our model.
+
+Top correlations
+
+```{r}
+library(lares)
+corr_cross(select(data1,recency,frequency,order_size,total_MXN,status), rm.na = T, max_pvalue = 0.05, top = 15, grid = T)
+```
+
+From this correlation analysis the numeric variable most probable to have influence in our model is recency.
+
 
 ## 1.3) Develop a logistic regression in order to solve the problem. (The split of train and test is up to you)
 ```{r}
