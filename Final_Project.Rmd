@@ -15,6 +15,7 @@ library(ggfortify)
 library(survminer)
 library(tidyverse)
 library(ggfortify)
+library(DescTools)
 library(ggcorrplot)
 library(tidymodels)
 library(patchwork)
@@ -124,10 +125,12 @@ The red dashed line is the proportion of the entire data set and as we can see t
 ```{r}
 gen_props <- data1 %>% group_by(age_gen) %>%  count(status) %>% mutate(proportion = n/sum(n)) %>% filter(status==1)
 
-ggplot(gen_props,aes(x=age_gen, y=proportion)) + geom_point(size = 3.7, colour= c("blue", "red", 'Brown','Orange')) + geom_hline(yintercept=0.4079265, linetype="dashed", color = "red", linetype = 'Proportion of all data') + 
-                                          labs( title = 'Percentage of clients who repurchased',
-                                          x = 'Categories of the "Age Generation" variable',
-                                          y = "%") 
+ggplot(gen_props,aes(x=age_gen, y=proportion)) + 
+  geom_point(size = 3.7, colour= c("blue", "red", 'Brown','Orange')) + 
+  geom_hline(yintercept=0.4079265, linetype="dashed", color = "red", linetype = 'Proportion of all data') + 
+  labs( title = 'Percentage of clients who repurchased',
+        x = 'Categories of the "Age Generation" variable',
+        y = "%") 
 ```
 Analyzing the second categorical variable and based on the previous visualization there is a good chance that "Boomers" and "Generation Z" end up being good predictors because of it's difference on the proportion of customers who repurchased compared to the other categories and the general proportion.
 
@@ -275,28 +278,28 @@ test_results <- test
 test_results$prob_model <- logistic%>% predict(test, type = "response")
     test_results$class_model <- as.factor(ifelse(test_results$prob_model >= 0.5, 1, 0))
 # Accuracy
-    acc_model <-  accuracy(data = test_results,
-                           truth    = status,
-                           estimate = class_model)
-    acc_model <-acc_model$.estimate
-    print(paste0('Accuracy: ', acc_model))
-    
-    # Confusion Matrix
-    cm_model <- test_results %>% conf_mat(
-                   truth     = status,
-                   estimate  = class_model
-                  )
-    
-    # Sensitivity
-    sen_model <- cm_model$table[4]/(cm_model$table[4]+cm_model$table[3])
-    print(paste0('Sensitivity: ', sen_model))
+acc_model <-  accuracy(data = test_results,
+                       truth    = status,
+                       estimate = class_model)
+acc_model <-acc_model$.estimate
+print(paste0('Accuracy: ', acc_model))
 
-    # Specificity
-    spe_model <- cm_model$table[1]/(cm_model$table[1]+cm_model$table[2])
-    print(paste0('Specificity: ', spe_model))
-    
-    print('Confusion Matrix:')
-    cm_model
+# Confusion Matrix
+cm_model <- test_results %>% conf_mat(
+  truth=status,
+  estimate=class_model
+              )
+
+# Sensitivity
+sen_model <- cm_model$table[4]/(cm_model$table[4]+cm_model$table[3])
+print(paste0('Sensitivity: ', sen_model))
+
+# Specificity
+spe_model <- cm_model$table[1]/(cm_model$table[1]+cm_model$table[2])
+print(paste0('Specificity: ', spe_model))
+
+print('Confusion Matrix:')
+cm_model
 ```
 
 
@@ -304,23 +307,91 @@ test_results$prob_model <- logistic%>% predict(test, type = "response")
     -   Consider as threshold 40%, 50% and 60%, present the performance for all the thresholds and select the best one (Justify your decision)
 ```{r}
 # 40% threshold
-    test_results_40 <- test
-    test_results_40$prob_model <- logistic%>% predict(test, type = "response")
-    test_results_40$class_model <- as.factor(ifelse(test_results_40$prob_model >= 0.4, 1, 0))
-    
-    # 50% threshold
-    test_results_50 <- test
-    test_results_50$prob_model <- logistic%>% predict(test, type = "response")
-    test_results_50$class_model <- as.factor(ifelse(test_results_50$prob_model >= 0.5, 1, 0))
-    
-    # 60% threshold
-    test_results_60 <- test
-    test_results_60$prob_model <- logistic%>% predict(test, type = "response")
-    test_results_60$class_model <- as.factor(ifelse(test_results_60$prob_model >= 0.6, 1, 0))
-```
-    
+test_results_40 <- test
+test_results_40$prob_model <- logistic%>% predict(test, type = "response")
+test_results_40$class_model <- as.factor(ifelse(test_results_40$prob_model >= 0.4, 1, 0))
 
--   Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability clasify the new clients:
+# 50% threshold
+test_results_50 <- test
+test_results_50$prob_model <- logistic%>% predict(test, type = "response")
+test_results_50$class_model <- as.factor(ifelse(test_results_50$prob_model >= 0.5, 1, 0))
+
+# 60% threshold
+test_results_60 <- test
+test_results_60$prob_model <- logistic%>% predict(test, type = "response")
+test_results_60$class_model <- as.factor(ifelse(test_results_60$prob_model >= 0.6, 1, 0))
+```
+
+
+Results:
+```{r}
+print("Treshold 40:")
+# Confusion Matrix
+cm_model_40 <- test_results_40 %>% conf_mat(
+  truth=status,
+  estimate=class_model)
+
+# Accuracy
+acc_model_40 <-  accuracy(data = test_results_40, truth = status, 
+                       estimate = class_model)$.estimate
+
+print(paste0('Accuracy: ', acc_model_40))
+
+# Sensitivity
+sen_model_40 <- cm_model_40$table[4]/(cm_model_40$table[4]+cm_model_40$table[3])
+print(paste0('Sensitivity: ', sen_model_40))
+
+# Specificity
+spe_model_40 <- cm_model_40$table[1]/(cm_model_40$table[1]+cm_model_40$table[2])
+print(paste0('Specificity: ', spe_model_40))
+print("-----------------------------------------------------------------------")
+
+
+print("Treshold 50:")
+# Confusion Matrix
+cm_model_50 <- test_results_50 %>% conf_mat(
+  truth=status,
+  estimate=class_model)
+
+# Accuracy
+acc_model_50 <-  accuracy(data = test_results_50, truth = status, 
+                       estimate = class_model)$.estimate
+
+print(paste0('Accuracy: ', acc_model_50))
+
+# Sensitivity
+sen_model_50 <- cm_model_50$table[4]/(cm_model_50$table[4]+cm_model_50$table[3])
+print(paste0('Sensitivity: ', sen_model_50))
+
+# Specificity
+spe_model_50 <- cm_model_50$table[1]/(cm_model_50$table[1]+cm_model_50$table[2])
+print(paste0('Specificity: ', spe_model_50))
+
+print("-----------------------------------------------------------------------")
+
+print("Treshold 60:")
+# Confusion Matrix
+cm_model_60 <- test_results_60 %>% conf_mat(
+  truth=status,
+  estimate=class_model)
+
+# Accuracy
+acc_model_60 <-  accuracy(data = test_results_60, truth = status, 
+                       estimate = class_model)$.estimate
+
+print(paste0('Accuracy: ', acc_model_60))
+
+# Sensitivity
+sen_model_60 <- cm_model_60$table[4]/(cm_model_60$table[4]+cm_model_60$table[3])
+print(paste0('Sensitivity: ', sen_model_60))
+
+# Specificity
+spe_model_60 <- cm_model_60$table[1]/(cm_model_60$table[1]+cm_model_60$table[2])
+print(paste0('Specificity: ', spe_model_60))
+```
+
+
+-   Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability classify the new clients:
 
     -   Above or equal to the threshold selected as "High Probability"
     -   Less than 15% as "Low Probability"
@@ -330,9 +401,41 @@ test_results$prob_model <- logistic%>% predict(test, type = "response")
 
 -   Generate a survival analysis for the new clients.
 
+```{r}
+data_2 <- readxl::read_excel("./Data/clients_18months_VF.xlsx")
+data_2$month <- as.factor(data_2$month)
+# Create numeric month variable
+data_2$month_num <- sub("M", "", data_2$month)
+head(data_2)
+```
+```{r}
+summary(data_2)
+```
+
+
 -   Consider as "dead" those who do not make a purchase in the month 18.
 
+
+```{r}
+data_fin <- data_2 %>% filter(MXN>0) %>% group_by(id)  %>%  
+  summarise(time_surv = max(month_num)) %>% 
+  mutate(status =case_when(
+         time_surv == 17 ~ 0,
+         TRUE ~ 1))
+
+data_fin
+```
+
 -   Use the variables, age generation, market, probability label and recency and interpret the coeficients.
+
+```{r}
+data_merge <- data_merge %>% select(c(id, age_gen, market, ))
+data_fin <- merge(data_fin, data_merge, by="id",)
+data_fin
+```
+
+
+
 
 -   Generate the survival curves based on the following.
 
