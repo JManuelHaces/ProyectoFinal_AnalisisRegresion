@@ -385,7 +385,7 @@ spe_model_60 <- cm_model_60$table[1]/(cm_model_60$table[1]+cm_model_60$table[2])
 print(paste0('Specificity: ', spe_model_60))
 ```
 Conclusion:
-- The treshold that we chose is '60', we chose this one because it has the best 'Specificity', with this treshold we can predict better the *Falase Negatives* (We predict that the client will not repurchase and they don't).
+- The treshold that we chose is '50', we chose this one because it has the best 'Accuracy' and it has a better balanced sensitivity and specificity.
 
 
 -   Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability classify the new clients:
@@ -398,22 +398,21 @@ Conclusion:
 treshold_selec <- 0.5
 
 # Removing the response
-data <- data1
-data <- data %>% select(-(status))
+data_label <- data1
+data_label <- data_label %>% select(-(status))
 
 # Puting the probability into the dataset
-data$Prob_Predicted <- logistic %>% predict(data, type = "response")
+data_label$Prob_Predicted <- logistic %>% predict(data_label, type = "response")
 
 # Making a Label for each case
-data$Prob_Predicted <- case_when(
-    data$Prob_Predicted >= treshold_selec ~ "High Probability",
-    data$Prob_Predicted <= 0.15 ~ "Low Probability",
+data_label$Prob_Predicted <- case_when(
+    data_label$Prob_Predicted >= treshold_selec ~ "High Probability",
+    data_label$Prob_Predicted <= 0.15 ~ "Low Probability",
     TRUE ~ "Medium Probability"
 )
 
-data
+data_label
 ```
-
 
 
 # Phase 2 - (40%)
@@ -423,8 +422,10 @@ data
 ```{r}
 data_2 <- readxl::read_excel("./Data/clients_18months_VF.xlsx")
 data_2$month <- as.factor(data_2$month)
+
 # Create numeric month variable
 data_2$month_num <- sub("M", "", data_2$month)
+data_2$month_num <- as.numeric(data_2$month_num)
 head(data_2)
 ```
 
@@ -447,15 +448,46 @@ data_fin
 -   Use the variables, age generation, market, probability label and recency and interpret the coeficients.
 
 ```{r}
-data_merge <- data_merge %>% select(c(id, age_gen, market, ))
-data_fin <- merge(data_fin, data_merge, by="id",)
+# First, we have to merge the dataset with the probability labels with this dataset.
+data_fin <- merge(data_label, data_fin)
+
+# Now we apply a filter to keep the mention variables.
+data_fin <- data_fin %>% select(c(id, age_gen, market, Prob_Predicted, recency, time_surv,status))
 data_fin
 ```
 
--   Generate the survival curves based on the following.
+```{r}
+data_fin$Prob_Predicted <- as.factor(data_fin$Prob_Predicted)
+summary(data_fin)
+```
+### Model
+```{r}
+model <- coxph(Surv(time_surv, status) ~ age_gen + market + Prob_Predicted + recency, data = data_fin)
+summary(model)
+```
+The 2 variables that we can interpretate are:
 
-    -   Graph 1 - Based on probability label
+Prob_PredictedMedium Probability -> The probability of not surviving increases 1.3236 times if you belong to the medium probability prediction label.
 
-    -   Graph 2 - Based on market
+recency -> The bigger it is the recency the probability of not surviving increases 1.0272 times 
 
-    -   Interpret both graphs
+
+## Generate the survival curves based on the following.
+
+### Graph 1 - Based on probability label
+
+```{r}
+ggsurvplot(survfit(Surv(time_surv, status) ~ Prob_Predicted , data = data_fin),data=data_fin)
+```
+The prediction performs well, low probability label is the one that survives the less, followed by medium label. The high probability label is the one that survives the most.
+
+
+### Graph 2 - Based on market
+
+```{r}
+ggsurvplot(survfit(Surv(time_surv, status) ~ market , data = data_fin),data=data_fin)
+```
+
+It doesn't seem to be a difference between both markets.
+
+These graphs show that the company should campaign with people who have the label of low and medium probability.
