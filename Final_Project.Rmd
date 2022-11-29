@@ -5,6 +5,11 @@ output: html_notebook
 
 ```{r, message=FALSE, warning=FALSE}
 # Libraries
+library(renv)
+library(RODBC)
+library(boot)
+library(lares)
+library(psych)
 library(lme4)
 library(olsrr)
 library(lmtest)
@@ -16,6 +21,7 @@ library(survminer)
 library(tidyverse)
 library(ggfortify)
 library(DescTools)
+library(ggfortify)
 library(ggcorrplot)
 library(tidymodels)
 library(patchwork)
@@ -100,15 +106,15 @@ data1
 categoric_df <- data1 %>% select(market,age_gen)
 summary(categoric_df)
 ```
-- We have only two categorical variables without null values and with a low granularity.
 
+-   We have only two categorical variables without null values and with a low granularity.
 
 ```{r}
 initial_props <- data1 %>% count(status) %>% mutate(Balance= n/sum(n)) %>% filter(status==1)
 initial_props
 ```
-The percentage of customers who repurchased in the entire data set it´s around 40.71%, now we are going to compare this proportion to all the categories of our categorical variables.
 
+The percentage of customers who repurchased in the entire data set it´s around 40.71%, now we are going to compare this proportion to all the categories of our categorical variables.
 
 ```{r}
 market_props <- data1 %>% group_by(market) %>%  count(status) %>% mutate(proportion = n/sum(n)) %>% filter(status==1)
@@ -118,9 +124,8 @@ ggplot(market_props,aes(x=market, y=proportion)) + geom_point(size = 3.7, colour
                                           x = 'Categories of the "Market" variable',
                                           y = "%") 
 ```
+
 The red dashed line is the proportion of the entire data set and as we can see the English category of the market variable is pretty close to it and doesn't seem to be a very good predictor, on the other hand the Spanish may be more useful in order to predict customers who are not going to repurchase due to it has a lower proportion on people who repurchased comparing to the entire data set.
-
-
 
 ```{r}
 gen_props <- data1 %>% group_by(age_gen) %>%  count(status) %>% mutate(proportion = n/sum(n)) %>% filter(status==1)
@@ -132,8 +137,8 @@ ggplot(gen_props,aes(x=age_gen, y=proportion)) +
         x = 'Categories of the "Age Generation" variable',
         y = "%") 
 ```
-Analyzing the second categorical variable and based on the previous visualization there is a good chance that "Boomers" and "Generation Z" end up being good predictors because of it's difference on the proportion of customers who repurchased compared to the other categories and the general proportion.
 
+Analyzing the second categorical variable and based on the previous visualization there is a good chance that "Boomers" and "Generation Z" end up being good predictors because of it's difference on the proportion of customers who repurchased compared to the other categories and the general proportion.
 
 ### 1.2.2) Numerical variables
 
@@ -142,10 +147,11 @@ numeric_df <- data1 %>% select(-c(market,age_gen,status))
 summary(numeric_df)
 
 ```
-Recency: 
 
-- The 50% of the clients had 4 days since last order considerig the end of the period as 31/03/2021
-- The maximum value for this variable is 30, from this moment we may think that customers with values like this one could have less probabilities to repurchase
+Recency:
+
+-   The 50% of the clients had 4 days since last order considerig the end of the period as 31/03/2021
+-   The maximum value for this variable is 30, from this moment we may think that customers with values like this one could have less probabilities to repurchase
 
 ```{r}
 # Layout to split the screen
@@ -158,10 +164,9 @@ par(mar=c(4, 3.1, 1.1, 2.1))
 hist(numeric_df$recency , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Days since last order", xlim=c(0,30))
 ```
 
-
 Frecuency:
 
-- 75% of the customers had 3 or less number of orders in the first month. 
+-   75% of the customers had 3 or less number of orders in the first month.
 
 ```{r}
 # Layout to split the screen
@@ -174,12 +179,10 @@ par(mar=c(4, 3.1, 1.1, 2.1))
 hist(numeric_df$frequency , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Number of orders in the first month.", xlim=c(0,120))
 ```
 
-
 Order Size:
 
-- 75% of the customers had an average of $175.59 or less in their orders in the first month.
-- As we can see The mean is greater more than 50% than the median, and we have a maximum value of $1012,
-that's probabliy because we could have outliers in that variable
+-   75% of the customers had an average of \$175.59 or less in their orders in the first month.
+-   As we can see The mean is greater more than 50% than the median, and we have a maximum value of \$1012, that's probabliy because we could have outliers in that variable
 
 ```{r}
 # Layout to split the screen
@@ -192,12 +195,10 @@ par(mar=c(4, 3.1, 1.1, 2.1))
 hist(numeric_df$order_size , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Avg of money by orders in the first month", xlim=c(0,1012))
 ```
 
-
 Total MXN:
 
-- 75% of the customers spend $422.6 or less in their first month.
-- The mean is greater more than 70% than the median, and we have a maximum value of 4047, we may have outliers in this variable too.
-
+-   75% of the customers spend \$422.6 or less in their first month.
+-   The mean is greater more than 70% than the median, and we have a maximum value of 4047, we may have outliers in this variable too.
 
 ```{r}
 # Layout to split the screen
@@ -210,38 +211,29 @@ par(mar=c(4, 3.1, 1.1, 2.1))
 hist(numeric_df$total_MXN , breaks=40 , col=rgb(0.2,0.8,0.5,0.5) , border=F , main="" , xlab="Total money spent in the first month", xlim=c(0,4047))
 ```
 
-Correlation with the reponse variable:
-
-```{r}
-corr <- corr(select(data1,recency,frequency,order_size,total_MXN,status))
-ggcorrplot(corr, hc.order = TRUE, type = "lower",
-   lab = TRUE)
-```
 The most correlated variables are order_size + total_MXN which makes sense as the order size increase, the cost of it increases too. We are not going to remove any of those highly correlated variables as we only have a few variables to work with and they are not correlated enough in order to think that they are going to bring us problems in our model.
 
 Top correlations
 
 ```{r}
-library(lares)
 corr_cross(select(data1,recency,frequency,order_size,total_MXN,status), rm.na = T, max_pvalue = 0.05, top = 15, grid = T)
 ```
 
 From this correlation analysis the numeric variable most probable to have influence in our model is recency.
 
-
 ## 1.3) Develop a logistic regression in order to solve the problem. (The split of train and test is up to you)
+
 ```{r}
 # Response variable balance
 data1 %>% count(status) %>% mutate(Balance= n/sum(n))
 ```
-
 
 ```{r}
 # Train and test
 set.seed(10)
 
 split_inicial<- initial_split(
-                data = data1,
+                data = data1 %>% select(-(id)),
                 prop = 0.8,
                 strata = status
                 )
@@ -256,23 +248,26 @@ summary(logistic)
 
 -   Interpret the coefficients of your model.
 
-    -   *marketSpanish* $/rightarrow$
-    
-    -   *age_genGeneration X* $/rightarrow$
-    
-    -   *age_genGeneration Z* $/rightarrow$
-    
-    -   *age_genMillennials* $/rightarrow$
+    -   *marketSpanish* -> If the client is from the Spanish Market, the probability of repurchase decrease by 28% - This variable is *statistically significant*
 
-    -   *recency* $/rightarrow$
-    
-    -   *frequency* $/rightarrow$
-    
-    -   *order_size* $/rightarrow$
-    
-    -   *total_MXN* $/rightarrow$
+    -   *age_genGeneration X* -> If the client is generation X, the probability of repurchase increases by 9% - However it is *not statistically significant*
+
+    -   *age_genGeneration Z* -> If the client is generation Z, the probability of repurchase increases by 12% - However it is *not statistically significant*
+
+    -   *age_genMillennials* -> If the client is generation Millenials, the probability of repurchase increases by 7% - However it is *not statistically significant*
+
+    -   *recency* -> For every day that the last purchase of the client is from today, the chances of repurchase decreses by -0.5267 times. - This variable is *statistically significant*
+
+    -   *frequency* -> For every order the client made in the first month, the probability of repurchase decreases by -0.01771 times. - However it is *not statistically significant*
+
+    -   *order_size* -> For every 'peso' that the mean of purchases in the first month increase, the chances of repurchase decreases by -0.00051 times. - However it is *not statistically significant*
+
+    -   *total_MXN* -> For each peso that the customer's total purchase increases in the first month, the chances of repurchase increases by 0.00097 times. - This variable is *statistically significant*
+
+
 
 -   Review the performance of the model on the test data (Accuracy, Sensitivity, Specificity, Confusion Matrix)
+
 ```{r}
 test_results <- test
 test_results$prob_model <- logistic%>% predict(test, type = "response")
@@ -285,10 +280,11 @@ acc_model <-acc_model$.estimate
 print(paste0('Accuracy: ', acc_model))
 
 # Confusion Matrix
-cm_model <- test_results %>% conf_mat(
-  truth=status,
-  estimate=class_model
-              )
+cm_model <- test_results %>% 
+  conf_mat(
+    truth=status,
+    estimate=class_model
+    )
 
 # Sensitivity
 sen_model <- cm_model$table[4]/(cm_model$table[4]+cm_model$table[3])
@@ -302,9 +298,8 @@ print('Confusion Matrix:')
 cm_model
 ```
 
-
-
     -   Consider as threshold 40%, 50% and 60%, present the performance for all the thresholds and select the best one (Justify your decision)
+
 ```{r}
 # 40% threshold
 test_results_40 <- test
@@ -322,8 +317,8 @@ test_results_60$prob_model <- logistic%>% predict(test, type = "response")
 test_results_60$class_model <- as.factor(ifelse(test_results_60$prob_model >= 0.6, 1, 0))
 ```
 
-
 Results:
+
 ```{r}
 print("Treshold 40:")
 # Confusion Matrix
@@ -389,6 +384,8 @@ print(paste0('Sensitivity: ', sen_model_60))
 spe_model_60 <- cm_model_60$table[1]/(cm_model_60$table[1]+cm_model_60$table[2])
 print(paste0('Specificity: ', spe_model_60))
 ```
+Conclusion:
+- The treshold that we chose is '60', we chose this one because it has the best 'Specificity', with this treshold we can predict better the *Falase Negatives* (We predict that the client will not repurchase and they don't).
 
 
 -   Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability classify the new clients:
@@ -396,6 +393,28 @@ print(paste0('Specificity: ', spe_model_60))
     -   Above or equal to the threshold selected as "High Probability"
     -   Less than 15% as "Low Probability"
     -   The rest as "Medium Probability"
+```{r}
+# Selected Treshold
+treshold_selec <- 0.5
+
+# Removing the response
+data <- data1
+data <- data %>% select(-(status))
+
+# Puting the probability into the dataset
+data$Prob_Predicted <- logistic %>% predict(data, type = "response")
+
+# Making a Label for each case
+data$Prob_Predicted <- case_when(
+    data$Prob_Predicted >= treshold_selec ~ "High Probability",
+    data$Prob_Predicted <= 0.15 ~ "Low Probability",
+    TRUE ~ "Medium Probability"
+)
+
+data
+```
+
+
 
 # Phase 2 - (40%)
 
@@ -408,13 +427,12 @@ data_2$month <- as.factor(data_2$month)
 data_2$month_num <- sub("M", "", data_2$month)
 head(data_2)
 ```
+
 ```{r}
 summary(data_2)
 ```
 
-
 -   Consider as "dead" those who do not make a purchase in the month 18.
-
 
 ```{r}
 data_fin <- data_2 %>% filter(MXN>0) %>% group_by(id)  %>%  
@@ -433,9 +451,6 @@ data_merge <- data_merge %>% select(c(id, age_gen, market, ))
 data_fin <- merge(data_fin, data_merge, by="id",)
 data_fin
 ```
-
-
-
 
 -   Generate the survival curves based on the following.
 
