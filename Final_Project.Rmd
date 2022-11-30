@@ -150,7 +150,7 @@ summary(numeric_df)
 
 Recency:
 
--   The 50% of the clients had 4 days since last order considerig the end of the period as 31/03/2021
+-   The 50% of the clients had 4 days since last order considering the end of the period as 31/03/2021
 -   The maximum value for this variable is 30, from this moment we may think that customers with values like this one could have less probabilities to repurchase
 
 ```{r}
@@ -248,21 +248,21 @@ summary(logistic)
 
 -   Interpret the coefficients of your model.
 
-    -   *marketSpanish* -> If the client is from the Spanish Market, the probability of repurchase decrease by 28% - This variable is *statistically significant*
+    -   *marketSpanish* $\Rightarrow$ If the client is from the Spanish Market, the probability of repurchase decrease by 28% - This variable is *statistically significant*
 
-    -   *age_genGeneration X* -> If the client is generation X, the probability of repurchase increases by 9% - However it is *not statistically significant*
+    -   *age_genGeneration X* $\Rightarrow$ If the client is generation X, the probability of repurchase increases by 9% - However it is *not statistically significant*
 
-    -   *age_genGeneration Z* -> If the client is generation Z, the probability of repurchase increases by 12% - However it is *not statistically significant*
+    -   *age_genGeneration Z* $\Rightarrow$ If the client is generation Z, the probability of repurchase increases by 12% - However it is *not statistically significant*
 
-    -   *age_genMillennials* -> If the client is generation Millenials, the probability of repurchase increases by 7% - However it is *not statistically significant*
+    -   *age_genMillennials* $\Rightarrow$ If the client is generation Millenials, the probability of repurchase increases by 7% - However it is *not statistically significant*
 
-    -   *recency* -> For every day that the last purchase of the client is from today, the chances of repurchase decreses by -0.5267 times. - This variable is *statistically significant*
+    -   *recency* $\Rightarrow$ For every day that the last purchase of the client is from today, the chances of repurchase decreses by -0.5267 times. - This variable is *statistically significant*
 
-    -   *frequency* -> For every order the client made in the first month, the probability of repurchase decreases by -0.01771 times. - However it is *not statistically significant*
+    -   *frequency* $\Rightarrow$ For every order the client made in the first month, the probability of repurchase decreases by -0.01771 times. - However it is *not statistically significant*
 
-    -   *order_size* -> For every 'peso' that the mean of purchases in the first month increase, the chances of repurchase decreases by -0.00051 times. - However it is *not statistically significant*
+    -   *order_size* $\Rightarrow$ For every 'peso' that the mean of purchases in the first month increase, the chances of repurchase decreases by -0.00051 times. - However it is *not statistically significant*
 
-    -   *total_MXN* -> For each peso that the customer's total purchase increases in the first month, the chances of repurchase increases by 0.00097 times. - This variable is *statistically significant*
+    -   *total_MXN* $\Rightarrow$ For each peso that the customer's total purchase increases in the first month, the chances of repurchase increases by 0.00097 times. - This variable is *statistically significant*
 
 
 
@@ -385,7 +385,7 @@ spe_model_60 <- cm_model_60$table[1]/(cm_model_60$table[1]+cm_model_60$table[2])
 print(paste0('Specificity: ', spe_model_60))
 ```
 Conclusion:
-- The treshold that we chose is '50', we chose this one because it has the best 'Accuracy' and it has a better balanced sensitivity and specificity.
+- The threshold that we chose is '50', we chose this one because it has the best 'Accuracy' and it has a better balanced sensitivity and specificity.
 
 
 -   Once that the threshold is selected, calculate the probability of repurchase for all the dataset (train and test) and based on the probability classify the new clients:
@@ -467,9 +467,8 @@ summary(model)
 ```
 The 2 variables that we can interpretate are:
 
-Prob_PredictedMedium Probability -> The probability of not surviving increases 1.3236 times if you belong to the medium probability prediction label.
-
-recency -> The bigger it is the recency the probability of not surviving increases 1.0272 times 
++ *Prob_PredictedMedium Probability* $\Rightarrow$ The probability of not surviving increases 1.3236 times if you belong to the medium probability prediction label.
++ *recency* $\Rightarrow$ The bigger it is the recency the probability of not surviving increases 1.0272 times 
 
 
 ## Generate the survival curves based on the following.
